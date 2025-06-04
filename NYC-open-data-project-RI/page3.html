@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>repl.it</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <script src="script.js"></script>
+
+    <nav class="container">
+     <a href="index.html">Home</a>
+      <a href="page2.html">Info Page</a>
+      <a href="page3.html">Analysis Page</a>
+    </nav>
+
+    <div id="banner" class="container column">
+      <h1>Analysis Page</h1>
+	  
+	  
+      <p>NYC Open Data Project</p>
+    </div>
+
+    <div id="main" class="container">
+      <div id="body" class="container column">
+        <p>Here will show all the data for the NYC Restaurant Inspections
+</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Inspection Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>
+</head>
+<body>
+    <h1>NYC Restaurant Inspection Dashboard</h1>
+
+    <!-- Dropdown for selecting chart type -->
+    <label for="chart-type">Select Chart Type:</label>
+    <select id="chart-type" onchange="updateChart()">
+        <option value="bar">Bar Chart</option>
+        <option value="pie">Pie Chart</option>
+        <option value="line">Line Chart</option>
+    </select>
+
+    <!-- Dropdown for filtering by Borough -->
+    <label for="borough-filter">Filter by Borough:</label>
+    <select id="borough-filter" onchange="updateChart()">
+        <option value="">All Boroughs</option>
+        <option value="MANHATTAN">Manhattan</option>
+        <option value="BROOKLYN">Brooklyn</option>
+        <option value="QUEENS">Queens</option>
+        <option value="BRONX">Bronx</option>
+        <option value="STATEN ISLAND">Staten Island</option>
+    </select>
+
+    <!-- Dropdown for filtering by Inspection Score -->
+    <label for="score-filter">Filter by Inspection Score:</label>
+    <select id="score-filter" onchange="updateChart()">
+        <option value="">All Scores</option>
+        <option value="90-100">90-100</option>
+        <option value="80-89">80-89</option>
+        <option value="70-79">70-79</option>
+        <option value="60-69">60-69</option>
+    </select>
+
+    <!-- Chart Display Area -->
+    <div id="chart"></div>
+
+    <script>
+        let rawData = [
+            // Simulated data for restaurant inspections
+            { BOROUGH: 'MANHATTAN', SCORE: 95, INSPECTION_DATE: '2023-01-01' },
+            { BOROUGH: 'BROOKLYN', SCORE: 85, INSPECTION_DATE: '2023-01-02' },
+            { BOROUGH: 'QUEENS', SCORE: 92, INSPECTION_DATE: '2023-01-03' },
+            { BOROUGH: 'BRONX', SCORE: 75, INSPECTION_DATE: '2023-01-04' },
+            { BOROUGH: 'STATEN ISLAND', SCORE: 88, INSPECTION_DATE: '2023-01-05' },
+            { BOROUGH: 'MANHATTAN', SCORE: 70, INSPECTION_DATE: '2023-02-01' },
+            { BOROUGH: 'BROOKLYN', SCORE: 99, INSPECTION_DATE: '2023-02-10' },
+            { BOROUGH: 'QUEENS', SCORE: 60, INSPECTION_DATE: '2023-03-01' },
+            { BOROUGH: 'BRONX', SCORE: 78, INSPECTION_DATE: '2023-03-10' },
+            { BOROUGH: 'STATEN ISLAND', SCORE: 82, INSPECTION_DATE: '2023-03-15' }
+        ];
+
+        // Function to apply filters
+        function applyFilters(data) {
+            const boroughFilter = document.getElementById('borough-filter').value;
+            const scoreFilter = document.getElementById('score-filter').value;
+
+            if (boroughFilter) {
+                data = data.filter(item => item.BOROUGH === boroughFilter);
+            }
+
+            if (scoreFilter) {
+                const [minScore, maxScore] = scoreFilter.split('-').map(Number);
+                data = data.filter(item => item.SCORE >= minScore && item.SCORE <= maxScore);
+            }
+
+            return data;
+        }
+
+        // Function to generate a chart based on selected options
+        function updateChart() {
+            const chartType = document.getElementById('chart-type').value;
+            let filteredData = applyFilters(rawData);
+
+            let chartData;
+            if (chartType === 'bar') {
+                chartData = generateBarData(filteredData);
+            } else if (chartType === 'pie') {
+                chartData = generatePieData(filteredData);
+            } else if (chartType === 'line') {
+                chartData = generateLineData(filteredData);
+            }
+
+            // Draw chart using C3.js
+            c3.generate({
+                bindto: '#chart',
+                data: chartData,
+                tooltip: {
+                    grouped: true,
+                    format: {
+                        value: function(value) { return value.toFixed(2); }
+                    }
+                }
+            });
+        }
+
+        // Function to generate data for a Bar chart
+        function generateBarData(data) {
+            const boroughCounts = {};
+
+            data.forEach(item => {
+                const borough = item.BOROUGH;
+                boroughCounts[borough] = (boroughCounts[borough] || 0) + 1;
+            });
+
+            return {
+                columns: [
+                    ['Borough', ...Object.keys(boroughCounts)],
+                    ['Count', ...Object.values(boroughCounts)]
+                ],
+                type: 'bar'
+            };
+        }
+
+        // Function to generate data for a Pie chart
+        function generatePieData(data) {
+            const boroughCounts = {};
+
+            data.forEach(item => {
+                const borough = item.BOROUGH;
+                boroughCounts[borough] = (boroughCounts[borough] || 0) + 1;
+            });
+
+            return {
+                columns: Object.entries(boroughCounts).map(([borough, count]) => [borough, count]),
+                type: 'pie'
+            };
+        }
+
+        // Function to generate data for a Line chart (Inspection Scores over Time, for example)
+        function generateLineData(data) {
+            const dateCounts = {};
+
+            data.forEach(item => {
+                const date = item.INSPECTION_DATE;
+                dateCounts[date] = (dateCounts[date] || 0) + 1;
+            });
+
+            return {
+                x: 'x',
+                columns: [
+                    ['x', ...Object.keys(dateCounts)],
+                    ['Inspections', ...Object.values(dateCounts)]
+                ],
+                type: 'line'
+            };
+        }
+
+        // Initial chart update on page load
+        updateChart();
+    </script>
+</body>
+</html>
+
+
+
+        <a href="https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j/about_data">Source</a>
+      </div>
+		
+      <div id="links" class="container column">
+
+      </div>
+    </div>
+
+    <div id="footer" class="container"> @Copyright 2021 </div>
+    
+  </body>
+</html>
